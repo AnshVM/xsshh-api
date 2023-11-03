@@ -253,9 +253,9 @@ export class Analyzer {
         if (expr.property.type !== 'PrivateIdentifier') {
             sources.push(...this.expression(expr.property));
         }
-        
+
         const str = generate(expr);
-        if(this.isSource(str)) {
+        if (this.isSource(str)) {
             sources.push(str);
         }
 
@@ -269,10 +269,16 @@ export class Analyzer {
     }
 
     private callExpression(expr: estree.CallExpression): string[] {
-        const args = expr.arguments.map(arg => generate(arg));
-        const sources = args.filter(arg => this.isSource(arg));
+        const sources = expr.arguments.map(arg => {
+            if (arg.type !== 'SpreadElement') {
+                const sourcesInArg = this.expression(arg)
+                return sourcesInArg
+            }
+            return []
+        }).flat()
 
-        if(expr.callee.type !== 'Identifier' && expr.callee.type !== 'Super') {
+
+        if (expr.callee.type !== 'Identifier' && expr.callee.type !== 'Super') {
             sources.push(...this.expression(expr.callee))
         }
         const callee = generate(expr.callee);
@@ -285,9 +291,12 @@ export class Analyzer {
         const markedArgs = this.scope.findSink(callee);
 
         if (markedArgs) {
-            args.forEach((arg, i) => {
-                if (markedArgs[i] === true && this.isSource(arg)) {
-                    this.report([arg], callee, expr);
+            expr.arguments.forEach((arg, i) => {
+                if (arg.type === 'SpreadElement') return;
+
+                const sourcesInArg = this.expression(arg)
+                if (markedArgs[i] === true && sourcesInArg.length > 0) {
+                    this.report(sourcesInArg, callee, expr);
                 }
             })
         }
@@ -326,7 +335,7 @@ export class Analyzer {
         sources.forEach(source => {
             this.scope.markSinked(source);
         })
-        
+
         this.logReport('--------------------------------')
         logNode(node)
         this.logReport(generate(node))
@@ -348,7 +357,7 @@ function logNode(node: Statement | estree.Expression) {
         ignoreIllegals: true
     }
 
-    const highlighted = highlight(code,config)
+    const highlighted = highlight(code, config)
 
     console.log(highlighted)
 }
