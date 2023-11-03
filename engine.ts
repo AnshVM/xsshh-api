@@ -281,9 +281,11 @@ export class Analyzer {
         if (expr.callee.type !== 'Identifier' && expr.callee.type !== 'Super') {
             sources.push(...this.expression(expr.callee))
         }
+        
+        if(expr.callee.type !== 'Super') this.expression(expr.callee)
         const callee = generate(expr.callee);
 
-        if (isSinkFunction(callee)) {
+        if (isSinkFunction(callee) && sources.length > 0) {
             this.report(sources, callee, expr);
             return sources;
         }

@@ -6,7 +6,7 @@ type Statement = estree.Statement | estree.Declaration | estree.ModuleDeclaratio
 // property because it reads input from the query string.
 // BASE_SOURCES stores js variables that are attacker controlled by nature
 const BASE_SOURCES = ['document.URL', 'document.documentURI', 'document.URLUnencoded',
-    'document.baseURI', 'location.search', 'document.cookie', 'document.referrer']
+    'document.baseURI', 'location.search', 'window.location.search' ,'document.cookie', 'document.referrer']
 
 const isBaseSource = (id: string): boolean => {
     return BASE_SOURCES.includes(id);
